@@ -37,6 +37,9 @@ def std(x):
 
 
 def quartrature_sum(x):
+    """
+    Equivalent to calculating the euclidian distance between points in a list
+    """
     sum_quart = 0
     for val in x:
         sum_quart += val**2
@@ -51,6 +54,9 @@ def correlation_coefficients(x, y):
 
 
 def linear_fit_error(x, y, m, c, yerr):
+    """
+    Calculates error in the slope and intercept of a linear fit
+    """
     assert len(x) == len(y)
     N = len(x)
     y_pred = np.array(x) * m + c
@@ -71,6 +77,9 @@ def common_uncertainty(y_pred, y, m, c):
 
 
 def simple_least_squares_linear(x, y):
+    """
+    Calculates a simple linear fit
+    """
     sigma_xy = covariance(x, y)
     sigma_2 = variance(x)
     m = sigma_xy / sigma_2
@@ -82,10 +91,19 @@ def simple_least_squares_linear(x, y):
     return m, c
 
 
-def weighted_least_squares_linear(x, y, err):
+def weighted_least_squares_linear(x, y, err=[]):
     """
+    Calculates an error weighted least squares linear fit
+    Can take in uncertaintes.ufloat or a simple list with errors
+    Input: x, y -> type ufloat
+    Input 2: x, y, err -> type list
     Returns: [m, c], [m_err, c_err], [y_pred, res], [chi_squared]
     """
+    print("Warning: the output for this function has changed to support ufloat")
+    print("the output is now")
+    if err==[]:
+        err = combine_linear_uncertainties(x, y)
+
     sum_mult2 = lambda x, y: sum(np.multiply(x, y))
     sum_mult3 = lambda x, y, z: sum(np.multiply(np.multiply(x, y), z))
 
@@ -104,11 +122,12 @@ def weighted_least_squares_linear(x, y, err):
     chi_squared = sum_mult2(w, np.power(res, 2))
     # print(f"m = {m:.2}±{m_err:.2}, c = {c:.2}±{c_err:.2}, Χ² = {chi_squared:.2}")
     # print(f"Equation: y = ({m:.2}±{m_err:.2})*x + ({c:.2}±{c_err:.2})")
-    return [m, c], [m_err, c_err], [y_pred, res], [chi_squared]
+    return [ufloat(m, m_err), ufloat(c, c_err)], [y_pred, res], [chi_squared]
 
 
 def weighted_average(x):
     """
+    Computes the weighted average of a ufloat array
     Assumes a roughly normal distribution of error to weigh each error by the
     inverse of the error squared
     Arguments:
@@ -121,12 +140,25 @@ def weighted_average(x):
     return np.sum(np.multiply(weights, x))
 
 
-def combine_linear_uncertainties(x, y, x_err, y_err):
+def combine_linear_uncertainties(x, y, x_err=[], y_err=[]):
+    """
+    Combines the error in x and in y assuming a linear relationship between x and y
+    """
+    if x_err == [] and y_err == []:
+        _, x_err = seperate_uncertainty_array(x)
+        _, y_err = seperate_uncertainty_array(y)
+
     m, _ = simple_least_squares_linear(x, y)
     return quartrature_sum([y_err, m * x_err])
 
 
 def agreement_test(x, y):
+    """
+    Returns output of agreement test by calculating if the x and y value passes a 
+    2 sigma agreement test
+    Arugments: x, y -> ufloat
+    Returns: boolean
+    """
     assert type(x) in ufloat_types, "Agreement test only takes in ufloats"
     assert type(y) in ufloat_types, "Agreement test only takes in ufloats"
 
