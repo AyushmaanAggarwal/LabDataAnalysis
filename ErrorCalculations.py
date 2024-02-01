@@ -5,59 +5,90 @@
 # Currently implemented features:
 # Calculating errors from ADS and DMM
 
+import numpy as np
+from uncertainties import ufloat
+
+
 # DMM Errors
-
-
 def dmm_err_dc_voltage(voltage, digits=0.01):
-    # print(f"Voltages should be between 200mV and 1000V")
-    return (0.5 / 100.0) * voltage + digits
+    """
+    Calculates the error in the DC voltage and returns a ufloat
+    """
+    assert voltage >= 200e-3, "Voltage should be >= 200mV"
+    assert voltage <= 1e3, "Voltage should be <= 1000V"
+
+    return ufloat(voltage, (0.5 / 100.0) * voltage + digits)
 
 
 def dmm_err_ac_voltage(voltage, digits=0.01):
-    # print(f"Voltages should be between 200mV and 750V")
-    return (0.8 / 100.0) * voltage + 3 * digits
+    """
+    Calculates the error in the AC voltage and returns a ufloat
+    """
+    assert voltage >= 200e-3, "Voltage should be >= 200mV"
+    assert voltage <= 750, "Voltage should be <= 750V"
+
+    return ufloat(voltage, (0.8 / 100.0) * voltage + 3 * digits)
 
 
 def dmm_err_dc_current(current, digits=0.01):
-    # print(f"Currents should be between 20mA and 20A")
-    return (0.8 / 100.0) * current + digits
+    """
+    Calculates the error in the DC current and returns a ufloat
+    """
+    assert current >= 20e-3, "Current should be >= 20mA"
+    assert current <= 20, "Current should be <= 20A"
+
+    return ufloat(current, (0.8 / 100.0) * current + digits)
 
 
 def dmm_err_ac_current(current, digits=0.01):
-    # print(f"Currents should be between 2mA and 20A")
-    return (1.0 / 100.0) * current + 3 * digits
+    """
+    Calculates the error in the AC current and returns a ufloat
+    """
+    assert current >= 20e-3, "Current should be >= 20mA"
+    assert current <= 20, "Current should be <= 20A"
+
+    return ufloat(current, (1.0 / 100.0) * current + 3 * digits)
 
 
 def dmm_err_resistance(resistance, digits=0.01):
-    # print(f"Resistance should be between 200 Ohm and 2000M Ohm")
-    return (2.5 / 100.0) * resistance + 3 * digits
+    """
+    Calculates the error in the resistance and returns a ufloat
+    """
+    assert resistance >= 200, "Resistance should be >= 200 Ohm"
+    assert resistance <= 2000e6, "Resistance should be <= 2000 M Ohm"
+
+    return ufloat(resistance, (2.5 / 100.0) * resistance + 3 * digits)
 
 
 def dmm_err_capacitance(capacitance, digits=0.01):
-    # print(f"Capacitance should be between 2nF and 200uF")
-    return (2.5 / 100.0) * capacitance + 5 * digits
+    """
+    Calculates the error in the capacitance and returns a ufloat
+    """
+    assert capacitance >= 2e-9, "Capacitance should be >= 2nF"
+    assert capacitance <= 200e-6, "Capacitance should be <= 200uF"
+
+    return ufloat(capacitance, (2.5 / 100.0) * capacitance + 5 * digits)
 
 
 def resistance_err(resistance):
-    return 0.01 * resistance
+    return ufloat(resistance, 0.01 * resistance)
 
 
 # ADS Errors
 def ads_err_volt_voltmeter(voltage, digits=0.001):
-    return digits
+    return ufloat(voltage, digits)
 
 
 def ads_err_volt_oscilliscope(voltage, scale=0.5):
-    ### WHAT IS V/div
     if scale >= 1:
-        return 0.1 + (0.5 / 100.0) * voltage
+        return ufloat(voltage, 0.1 + (0.5 / 100.0) * voltage)
     elif scale <= 0.5:
-        return 0.01 + (0.5 / 100.0) * voltage
+        return ufloat(voltage, 0.01 + (0.5 / 100.0) * voltage)
 
 
 def ads_err_voltage_output(voltage):
     ### WHAT IS V/div
     if voltage <= 1:
-        return 0.01 + 0.5 * voltage
+        return ufloat(voltage, 0.01 + 0.5 * voltage)
     else:
-        return 0.025 + 0.5 * voltage
+        return ufloat(voltage, 0.025 + 0.5 * voltage)
