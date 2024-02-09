@@ -7,7 +7,7 @@
 
 import numpy as np
 import matplotlib.colors as mcolors
-from uncertainties import ufloat
+from uncertainties import ufloat, unumpy as unp
 
 ufloat_types = [type(ufloat(0, 0)), type(ufloat(0, 0) / ufloat(1, 1))]
 colors = list(mcolors.TABLEAU_COLORS)
@@ -150,6 +150,15 @@ def weighted_least_squares_linear(x, y, err=[]):
     # print(f"Equation: y = ({m:.2}±{m_err:.2})*x + ({c:.2}±{c_err:.2})")
     return [ufloat(m, m_err), ufloat(c, c_err)], [y_pred, res], [chi_squared]
 
+def seperate_uncertainty_array(x):
+    """
+    Seperates the nominal values and uncertainties of an ufloat array
+    Arguments:
+    - x is the ufloat value with error
+    >>> seperate_uncertainty_array(np.array([ufloat(0.0,2.0), ufloat(1.0, 1.0)]))
+    (array([0., 1.]), array([2., 1.]))
+    """
+    return unp.nominal_values(x), unp.std_devs(x)
 
 def weighted_average(x):
     """
@@ -166,7 +175,7 @@ def weighted_average(x):
     """
     _, err = seperate_uncertainty_array(x)
     weights = 1 / np.square(err)
-    weights = weights / sum(weights)
+    weights = weights / np.sum(weights)
     return np.sum(np.multiply(weights, x))
 
 

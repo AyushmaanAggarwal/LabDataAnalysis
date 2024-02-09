@@ -1,0 +1,15 @@
+[project]
+name = "LabDataAnalysis"
+version = "0.0.1"
+license = {file = "LICENSE"}
+description = "Python Lab Files"
+readme = "README.md"
+dependencies = [
+    "numpy",
+    "uncertainties",
+    "matplotlib",
+    "pytest"
+]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
