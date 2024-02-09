@@ -10,6 +10,11 @@ def voltage_divider(v_top, r_top, v_bottom, r_bottom):
     - v_r1 - voltage drop across the top resistor
     - v_r2 - voltage drop across the bottom resistor
     - I - current flowing between the 2 circuts
+
+    >>> voltage_divider(1,1,1,1)
+    (1.0, 0.0, 0.0, 0.0)
+    >>> voltage_divider(1,1,0,1)
+    (0.5, 0.5, -0.5, 0.5)
     """
     v1, r1, v2, r2 = v_bottom, r_top, v_top, r_bottom
     v_out = (v1 * r1 + v2 * r2) / (r1 + r2)
@@ -28,3 +33,9 @@ def resistor_in_parallel(r1, r2):
 
 def resistor_in_series(r1, r2):
     return r1 + r2
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

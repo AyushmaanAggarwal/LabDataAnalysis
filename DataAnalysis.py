@@ -14,6 +14,16 @@ colors = list(mcolors.TABLEAU_COLORS)
 
 
 def covariance(x, y):
+    """
+    Computes the covariance between 2 variables
+
+    >>> covariance([1,2,3],[1,2,3])==1
+    True
+    >>> covariance([1,2,3],[3,2,1])==-1
+    True
+    >>> covariance([5,6,7],[3,2,1])==-1
+    True
+    """
     assert len(x) == len(y)
     u_x, u_y = np.mean(x), np.mean(y)
     sum_covar = 0
@@ -24,6 +34,12 @@ def covariance(x, y):
 
 
 def variance(x):
+    """
+    Computes variance across a variable 
+
+    >>> variance([1,2,3])
+    1.0
+    """
     u_x = np.mean(x)
     sum_covar = 0
     for i in range(len(x)):
@@ -38,7 +54,10 @@ def std(x):
 
 def quartrature_sum(x):
     """
-    Equivalent to calculating the euclidian distance between points in a list
+    Equivalent to calculating the euclidian distance between points in a list given a list of residuals/errors
+    
+    >>> quartrature_sum([40, 20, 20])==np.sqrt(2400)
+    True
     """
     sum_quart = 0
     for val in x:
@@ -79,6 +98,13 @@ def common_uncertainty(y_pred, y, m, c):
 def simple_least_squares_linear(x, y):
     """
     Calculates a simple linear fit
+
+    >>> simple_least_squares_linear([1,2,3,4], [1,2,3,4])
+    (1.0, 0.0)
+    >>> simple_least_squares_linear([1,2,3,4], [4,3,2,1])
+    (-1.0, 5.0)
+    >>> simple_least_squares_linear([1,2,3,4], [10, 10, 10, 10])
+    (0.0, 10.0)
     """
     sigma_xy = covariance(x, y)
     sigma_2 = variance(x)
@@ -97,11 +123,11 @@ def weighted_least_squares_linear(x, y, err=[]):
     Can take in uncertaintes.ufloat or a simple list with errors
     Input: x, y -> type ufloat
     Input 2: x, y, err -> type list
-    Returns: [m, c], [m_err, c_err], [y_pred, res], [chi_squared]
+    Returns: [m, c], [y_pred, res], [chi_squared]
     """
     print("Warning: the output for this function has changed to support ufloat")
     print("the output is now")
-    if err==[]:
+    if err == []:
         err = combine_linear_uncertainties(x, y)
 
     sum_mult2 = lambda x, y: sum(np.multiply(x, y))
@@ -133,6 +159,10 @@ def weighted_average(x):
     Arguments:
     - x is the ufloat value with error
 
+    >>> weighted_average([ufloat(0.0,2.0), ufloat(1.0, 1.0)]).n 
+    0.8
+    >>> weighted_average([ufloat(0.0,1.0), ufloat(1.0, 1.0)]).n
+    0.5
     """
     _, err = seperate_uncertainty_array(x)
     weights = 1 / np.square(err)
@@ -154,10 +184,17 @@ def combine_linear_uncertainties(x, y, x_err=[], y_err=[]):
 
 def agreement_test(x, y):
     """
-    Returns output of agreement test by calculating if the x and y value passes a 
+    Returns output of agreement test by calculating if the x and y value passes a
     2 sigma agreement test
     Arugments: x, y -> ufloat
     Returns: boolean
+
+    >>> agreement_test(ufloat(0,0), ufloat(0,0))
+    True
+    >>> agreement_test(ufloat(1,1), ufloat(0,1))
+    True
+    >>> agreement_test(ufloat(10,1), ufloat(0,1))
+    False
     """
     assert type(x) in ufloat_types, "Agreement test only takes in ufloats"
     assert type(y) in ufloat_types, "Agreement test only takes in ufloats"
@@ -184,11 +221,11 @@ def gen_ufloat(x, key):
     return ufloat(x, abs(key(x)))
 
 
-def gen_uncertain_array(x, key):
+def gen_ufloat_array(x, key):
     return [ufloat(val, key(abs(val))) for val in x]
 
 
-def seperate_uncertainty_array(x):
+def seperate_ufloat_array(x):
     return [val.nominal_value for val in x], [val.std_dev for val in x]
 
 
@@ -209,32 +246,45 @@ def print_ufloats(x, digits=3):
 def metric_converter(x, prefix):
     """
     Converts Metric Prefix to No Prefix
+
+    >>> metric_converter(1, "T") == 1e12
+    True
+    >>> metric_converter(10, "n") == 1e-8
+    True
     """
     conversion_rate = 1
     match prefix:
         case "T":
-            conversion_rate = 10e12
+            conversion_rate = 1e12
         case "G":
-            conversion_rate = 10e9
+            conversion_rate = 1e9
         case "M":
-            conversion_rate = 10e6
+            conversion_rate = 1e6
         case "k":
-            conversion_rate = 10e3
+            conversion_rate = 1e3
         case "h":
-            conversion_rate = 10e2
+            conversion_rate = 1e2
         case "da":
-            conversion_rate = 10e1
+            conversion_rate = 1e1
         case "d":
-            conversion_rate = 10e-1
+            conversion_rate = 1e-1
         case "c":
-            conversion_rate = 10e-2
+            conversion_rate = 1e-2
         case "m":
-            conversion_rate = 10e-3
+            conversion_rate = 1e-3
         case "u":
-            conversion_rate = 10e-6
+            conversion_rate = 1e-6
         case "n":
-            conversion_rate = 10e-9
+            conversion_rate = 1e-9
         case "p":
-            conversion_rate = 10e-12
+            conversion_rate = 1e-12
         case _:
             raise ValueError("Must be a metric prefix")
+
+    return x * conversion_rate
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()
