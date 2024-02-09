@@ -1,6 +1,6 @@
 # Physics Lab Analysis Toolkit
 
-To install type
+To install type in the command line at the folder
 
 ```Sh
 git clone git@github.com:AyushmaanAggarwal/LabDataAnalysis.git
@@ -14,4 +14,4 @@ from LabDataAnalysis.DataAnalysis import *
 from LabDataAnalysis.ErrorCalculations import *
 ```
 
-To contribute, develop a function and associated [doctests](https://docs.python.org/3/library/doctest.html) to test if your function works as intended, then open a PR or request for contributor access.
+To contribute, develop a function and test the function with [doctests](https://docs.python.org/3/library/doctest.html), then open a PR or request for contributor access.
