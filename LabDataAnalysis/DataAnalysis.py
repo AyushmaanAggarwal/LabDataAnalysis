@@ -106,6 +106,7 @@ def simple_least_squares_linear(x, y):
     >>> simple_least_squares_linear([1,2,3,4], [10, 10, 10, 10])
     (0.0, 10.0)
     """
+    x, y = list(x), list(y) # as x and y cannot be np.arrays or iterables
     sigma_xy = covariance(x, y)
     sigma_2 = variance(x)
     m = sigma_xy / sigma_2
