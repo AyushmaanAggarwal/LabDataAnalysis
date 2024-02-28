@@ -13,6 +13,7 @@ ufloat_types = [type(ufloat(0, 0)), type(ufloat(0, 0) / ufloat(1, 1))]
 colors = list(mcolors.TABLEAU_COLORS)
 
 
+# Simple Statistics Functions
 def covariance(x, y):
     """
     Computes the covariance between 2 variables
@@ -65,6 +66,58 @@ def quartrature_sum(x):
     return sum_quart**0.5
 
 
+def weighted_average(x):
+    """
+    Computes the weighted average of a ufloat array
+    Assumes a roughly normal distribution of error to weigh each error by the
+    inverse of the error squared
+    Arguments:
+    - x is the ufloat value with error
+
+    >>> weighted_average([ufloat(0.0,2.0), ufloat(1.0, 1.0)]).n
+    0.8
+    >>> weighted_average([ufloat(0.0,1.0), ufloat(1.0, 1.0)]).n
+    0.5
+    """
+    _, err = seperate_uncertainty_array(x)
+    weights = 1 / np.square(err)
+    weights = weights / np.sum(weights)
+    return np.sum(np.multiply(weights, x))
+
+
+def agreement_test(x, y):
+    """
+    Returns output of agreement test by calculating if the x and y value passes a
+    2 sigma agreement test
+    Arugments: x, y -> ufloat
+    Returns: boolean
+
+    >>> agreement_test(ufloat(0,0), ufloat(0,0))
+    True
+    >>> agreement_test(ufloat(1,1), ufloat(0,1))
+    True
+    >>> agreement_test(ufloat(10,1), ufloat(0,1))
+    False
+    """
+    assert type(x) in ufloat_types, "Agreement test only takes in ufloats"
+    assert type(y) in ufloat_types, "Agreement test only takes in ufloats"
+
+    difference = abs(abs(x.n) - abs(y.n))
+    if difference == 0:
+        return True
+
+    error = np.sqrt(np.square(x.s) + np.square(y.s))
+    if error == 0:
+        return False
+
+    agreement_value = difference / (error * 2)
+    return agreement_value < 1
+
+
+def percent_error(actual, expected):
+    return (actual - expected) / expected
+
+
 def correlation_coefficients(x, y):
     sigma_xy = covariance(x, y)
     sigma_x = np.sqrt(variance(x))
@@ -72,6 +125,7 @@ def correlation_coefficients(x, y):
     return sigma_xy / (sigma_x * sigma_y)
 
 
+# Fitting Functions
 def linear_fit_error(x, y, m, c, yerr):
     """
     Calculates error in the slope and intercept of a linear fit
@@ -106,7 +160,7 @@ def simple_least_squares_linear(x, y):
     >>> simple_least_squares_linear([1,2,3,4], [10, 10, 10, 10])
     (0.0, 10.0)
     """
-    x, y = list(x), list(y) # as x and y cannot be np.arrays or iterables
+    x, y = list(x), list(y)  # as x and y cannot be np.arrays or iterables
     sigma_xy = covariance(x, y)
     sigma_2 = variance(x)
     m = sigma_xy / sigma_2
@@ -152,6 +206,7 @@ def weighted_least_squares_linear(x, y, err=[]):
     return [ufloat(m, m_err), ufloat(c, c_err)], [y_pred, res], [chi_squared]
 
 
+# Uncertainties
 def seperate_uncertainty_array(x):
     """
     Seperates the nominal values and uncertainties of an ufloat array
@@ -161,25 +216,6 @@ def seperate_uncertainty_array(x):
     (array([0., 1.]), array([2., 1.]))
     """
     return unp.nominal_values(x), unp.std_devs(x)
-
-
-def weighted_average(x):
-    """
-    Computes the weighted average of a ufloat array
-    Assumes a roughly normal distribution of error to weigh each error by the
-    inverse of the error squared
-    Arguments:
-    - x is the ufloat value with error
-
-    >>> weighted_average([ufloat(0.0,2.0), ufloat(1.0, 1.0)]).n
-    0.8
-    >>> weighted_average([ufloat(0.0,1.0), ufloat(1.0, 1.0)]).n
-    0.5
-    """
-    _, err = seperate_uncertainty_array(x)
-    weights = 1 / np.square(err)
-    weights = weights / np.sum(weights)
-    return np.sum(np.multiply(weights, x))
 
 
 def combine_linear_uncertainties(x, y, x_err=[], y_err=[]):
@@ -192,35 +228,6 @@ def combine_linear_uncertainties(x, y, x_err=[], y_err=[]):
 
     m, _ = simple_least_squares_linear(x, y)
     return quartrature_sum([y_err, m * x_err])
-
-
-def agreement_test(x, y):
-    """
-    Returns output of agreement test by calculating if the x and y value passes a
-    2 sigma agreement test
-    Arugments: x, y -> ufloat
-    Returns: boolean
-
-    >>> agreement_test(ufloat(0,0), ufloat(0,0))
-    True
-    >>> agreement_test(ufloat(1,1), ufloat(0,1))
-    True
-    >>> agreement_test(ufloat(10,1), ufloat(0,1))
-    False
-    """
-    assert type(x) in ufloat_types, "Agreement test only takes in ufloats"
-    assert type(y) in ufloat_types, "Agreement test only takes in ufloats"
-
-    difference = abs(abs(x.n) - abs(y.n))
-    if difference == 0:
-        return True
-
-    error = np.sqrt(np.square(x.s) + np.square(y.s))
-    if error == 0:
-        return False
-
-    agreement_value = difference / (error * 2)
-    return agreement_value < 1
 
 
 def get_uncertain_array(x, error):
