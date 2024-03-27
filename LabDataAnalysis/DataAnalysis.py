@@ -12,8 +12,9 @@ from uncertainties import ufloat, unumpy as unp
 ufloat_types = [type(ufloat(0, 0)), type(ufloat(0, 0) / ufloat(1, 1))]
 colors = list(mcolors.TABLEAU_COLORS)
 
-
+# --------------------
 # Simple Statistics Functions
+# --------------------
 def covariance(x, y):
     """
     Computes the covariance between 2 variables
@@ -125,7 +126,9 @@ def correlation_coefficients(x, y):
     return sigma_xy / (sigma_x * sigma_y)
 
 
+# --------------------
 # Fitting Functions
+# --------------------
 def linear_fit_error(x, y, m, c, yerr):
     """
     Calculates error in the slope and intercept of a linear fit
@@ -206,7 +209,9 @@ def weighted_least_squares_linear(x, y, err=[]):
     return [ufloat(m, m_err), ufloat(c, c_err)], [y_pred, res], [chi_squared]
 
 
+# --------------------
 # Uncertainties
+# --------------------
 def seperate_uncertainty_array(x):
     """
     Seperates the nominal values and uncertainties of an ufloat array
@@ -268,7 +273,9 @@ def print_ufloats(x, digits=3):
         print(np.round(val.n, digits) + " ± " + np.round(val.s, digits))
 
 
+# --------------------
 # Unit Conversions (used to determine error bounds)
+# --------------------
 def metric_converter(x, prefix):
     """
     Converts Metric Prefix to No Prefix
