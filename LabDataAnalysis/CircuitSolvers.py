@@ -1,6 +1,7 @@
 # Solving Circits for Physics 111A Lab
 # Written by Ayushmaan Aggarwal
 # Date Created: 1/21/2024
+import numpy as np
 
 
 def voltage_divider(v_top, r_top, v_bottom, r_bottom):
@@ -33,6 +34,32 @@ def resistor_in_parallel(r1, r2):
 
 def resistor_in_series(r1, r2):
     return r1 + r2
+
+
+def gain(x):
+    """
+    Returns the gain from a complex valued impedence
+
+    >>> gain(1 + 1j) == np.sqrt(2)
+    True
+    >>> gain(1j) == 1
+    True
+    """
+    return np.abs(x)
+
+
+def phase(x):
+    """
+    Returns the phase from a complex valued impedance
+
+    >>> phase(1 + 1j) == np.pi/4
+    True
+    >>> phase(1 + 0j) == 0
+    True
+    """
+    if np.real(x) == 0:
+        return np.nan
+    return np.arctan(np.imag(x) / np.real(x))
 
 
 if __name__ == "__main__":
