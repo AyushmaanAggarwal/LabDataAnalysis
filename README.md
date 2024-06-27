@@ -13,4 +13,4 @@ from LabDataAnalysis.DataAnalysis import *
 from LabDataAnalysis.ErrorCalculations import *
 ```
 
-To contribute, develop a function and test the function with [doctests](https://docs.python.org/3/library/doctest.html) or run `python -m pytest`, then open a PR or request for contributor access.
+To contribute, develop a function and test the function with [doctests](https://docs.python.org/3/library/doctest.html) or run `python -m pytest`, then open a PR or request.
