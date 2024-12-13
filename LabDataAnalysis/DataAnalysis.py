@@ -1,11 +1,11 @@
-# Data Analysis for Physics 111A Lab
-# Written by Ayushmaan Aggarwal
-# Date Created: 9/13/2022
+# Data Analysis for Physics 
 
 # Currently implemented features:
 # Covariance, Variance, Standard Deviation, Correlation Coefficents, more
 
 import numpy as np
+import pandas as pd
+import scipy.optimize as opt
 import matplotlib.colors as mcolors
 from uncertainties import ufloat, unumpy as unp
 
@@ -86,7 +86,7 @@ def weighted_average(x):
     return np.sum(np.multiply(weights, x))
 
 
-def agreement_test(x, y):
+def agreement_test(x, y, sigma=2):
     """
     Returns output of agreement test by calculating if the x and y value passes a
     2 sigma agreement test
@@ -111,7 +111,7 @@ def agreement_test(x, y):
     if error == 0:
         return False
 
-    agreement_value = difference / (error * 2)
+    agreement_value = difference / (error * sigma)
     return agreement_value < 1
 
 
@@ -125,6 +125,31 @@ def correlation_coefficients(x, y):
     sigma_y = np.sqrt(variance(y))
     return sigma_xy / (sigma_x * sigma_y)
 
+def fft(x, sample_period=None, neg_freq=True):
+    """
+    Compute fft of function given an x and y
+    Args:
+        x 
+        sample_period: between points
+    Returns:
+        frequency
+        fft magnitude
+    """
+    fft = np.fft.fft(x)
+    if sample_period:
+        freq = np.fft.fftfreq(len(x),d=sample_period)
+    else:
+        freq = np.fft.fftfreq(len(x))
+    if not neg_freq:
+        average_positive_fft = pd.Series(abs(fft), index=np.abs(freq)).groupby(level=0).mean()
+        freq = average_positive_fft.index
+        fft = average_positive_fft.values
+        
+    return {
+        "frequency": freq, 
+        "magnitude": np.abs(fft),
+        "value": fft
+    }
 
 # --------------------
 # Fitting Functions
@@ -152,7 +177,28 @@ def common_uncertainty(y_pred, y, m, c):
     return np.sqrt(summation / (len(y_pred) - 2))
 
 
-def simple_least_squares_linear(x, y):
+def fit_model(model, x, y, df=None, p0=None):
+    x, y = parse_dataframe(df, x, y)
+    if p0 is None:
+        params, cov = opt.curve_fit(model, xdata=x, ydata=y)
+    else:
+        params, cov = opt.curve_fit(model, xdata=x, ydata=y, p0=p0)
+
+    params_err = np.diag(cov)
+    y_pred = model(x, *params)
+    res = np.subtract(y_pred, y)
+    return {
+        "x": x,
+        "y": y,
+        "params": params,
+        "params err": params_err,
+        "y pred": y_pred,
+        "res": res
+        }
+
+
+
+def simple_least_squares_linear(x, y, df=None):
     """
     Calculates a simple linear fit
 
@@ -163,6 +209,7 @@ def simple_least_squares_linear(x, y):
     >>> simple_least_squares_linear([1,2,3,4], [10, 10, 10, 10])
     (0.0, 10.0)
     """
+    x, y = parse_dataframe(df, x, y)
     x, y = list(x), list(y)  # as x and y cannot be np.arrays or iterables
     sigma_xy = covariance(x, y)
     sigma_2 = variance(x)
@@ -172,41 +219,54 @@ def simple_least_squares_linear(x, y):
     x_mean = np.mean(x)
     c = y_mean - m * x_mean
 
-    return m, c
+    y_pred = np.multiply(m, x) + c
+    res = np.subtract(y_pred, y)
+
+    return {
+        "x": x,
+        "y": y,
+        "residual": res,
+        "y pred": y_pred,
+        "m": m,
+        "c": c,
+    }
 
 
-def weighted_least_squares_linear(x, y, err=[]):
+def weighted_least_squares_linear(x, y, err=[], df=None):
     """
     Calculates an error weighted least squares linear fit
     Can take in uncertaintes.ufloat or a simple list with errors
     Input: x, y -> type ufloat
     Input 2: x, y, err -> type list
-    Returns: [m, c], [y_pred, res], [chi_squared]
+    Returns: Dictionary with x, y, residual, y pred, m, c, reduced chi2
     """
-    print("Warning: the output for this function has changed to support ufloat")
-    print("the output is now")
-    if err == []:
+    x, y = parse_dataframe(df, x, y)
+    if df is not None:
+        err = df[err]
+
+    if len(err) == 0:
         err = combine_linear_uncertainties(x, y)
 
-    sum_mult2 = lambda x, y: sum(np.multiply(x, y))
-    sum_mult3 = lambda x, y, z: sum(np.multiply(np.multiply(x, y), z))
+    w = np.divide(1, np.square(err))
 
-    w = np.divide(1, np.power(err, 2))
-    x2 = np.power(x, 2)
-
-    delta = sum(w) * sum_mult2(w, x2) - np.power(sum_mult2(w, x), 2)
-    m = (sum(w) * sum_mult3(w, x, y) - sum_mult2(w, x) * sum_mult2(w, y)) / delta
-    c = (sum_mult2(w, y) - m * sum_mult2(w, x)) / sum(w)
-
-    m_err = np.sqrt(sum(w) / delta)
-    c_err = np.sqrt(sum_mult2(w, x2) / delta)
-
+    delta = sum(w)*sum(np.square(x)*w) - np.square(sum(x*w))
+    m = (np.sum(w)*np.sum(w*x*y) - np.sum(w*x)*np.sum(w*y))/delta
+    c = (sum(w*x*x)*sum(w*y) - sum(w*x)*sum(w*x*y))/delta
+    m_err = np.sqrt(sum(w*x*x)/delta)
+    c_err = np.sqrt(sum(w)/delta)
+ 
     y_pred = np.add(np.multiply(m, x), c)
     res = np.subtract(y_pred, y)
-    chi_squared = sum_mult2(w, np.power(res, 2))
-    # print(f"m = {m:.2}±{m_err:.2}, c = {c:.2}±{c_err:.2}, Χ² = {chi_squared:.2}")
-    # print(f"Equation: y = ({m:.2}±{m_err:.2})*x + ({c:.2}±{c_err:.2})")
-    return [ufloat(m, m_err), ufloat(c, c_err)], [y_pred, res], [chi_squared]
+    reduced_chi2 = sum(np.square(res)*w)/(len(x) - 2)
+    return {
+        "x": x,
+        "y": y,
+        "residual": res,
+        "y pred": y_pred,
+        "m": ufloat(m, m_err),
+        "c": ufloat(c, c_err),
+        "reduced chi2": reduced_chi2
+    }
 
 
 # --------------------
@@ -227,13 +287,18 @@ def combine_linear_uncertainties(x, y, x_err=[], y_err=[]):
     """
     Combines the error in x and in y assuming a linear relationship between x and y
     """
-    if x_err == [] and y_err == []:
+    if len(x_err) + len(y_err) == 0:
         _, x_err = seperate_uncertainty_array(x)
         _, y_err = seperate_uncertainty_array(y)
 
     m, _ = simple_least_squares_linear(x, y)
     return quartrature_sum([y_err, m * x_err])
 
+
+def parse_dataframe(data, x, y):
+    if data is None:
+        return np.array(x), np.array(y)
+    return np.array(data[x]), np.array(data[y])
 
 def get_uncertain_array(x, error):
     if type(error) in [type([]), type(np.array([]))]:
