@@ -1,0 +1,9 @@
+cff-version: 0.0.1
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Ayushmaan Aggarwal"
+- family-names: "Johan Vonk"
+title: "LabDataAnalysis"
+version: 0.1.0
+date-released: 2024-12-12
+url: "https://github.com/AyushmaanAggarwal/LabDataAnalysis"
